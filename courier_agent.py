@@ -18,14 +18,26 @@ class CourierAgent(AgentBase):
     def handle_price_request(self, message, sender):
         order: OrderEntity = message.msg_body
         variants = self.__get_params(order)
-        v = variants[0]
-        logging.info('%s ← PRICE_REQUEST от заказа %s → отвечаю ценой %.2f, окно [%.2f; %.2f]',
-                     self.name, order.name, v['price'],
-                     v['time_from'], v['time_to'])
+
+        logging.info('%s ← PRICE_REQUEST от заказа %s → вариантов %d',
+                     self.name, order.name, len(variants))
+        for v in variants:
+            logging.info('  [%s] окно [%.2f; %.2f], цена %.2f',
+                         v['variant_name'], v['time_from'], v['time_to'], v['price'])
+
         self.send(sender, Message(MessageType.PRICE_RESPONSE, variants))
 
     def __get_params(self, order: OrderEntity) -> typing.List[dict]:
-        return [self.entity.estimate_order(order)]
+        if order.weight > self.entity.max_mass:
+            logging.info('%s: заказ %s слишком тяжёлый (%.2f > %.2f) — отказ',
+                         self.name, order.name, order.weight, self.entity.max_mass)
+            return []
+
+        if order.volume > self.entity.max_volume:
+            logging.info('%s: заказ %s слишком объёмный (%.2f > %.2f) — отказ',
+                         self.name, order.name, order.volume, self.entity.max_volume)
+            return []
+        return self.entity.estimate_order(order)
 
 
     def handle_planning_request(self, message, sender):

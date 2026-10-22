@@ -5,13 +5,13 @@ import time
 
 
 class MessageType(Enum):
-    INITIALIZATION    = 'Инициализация'
-    CREATE_ACTOR      = 'Создание актора'
-    HELLO_WORLD       = 'Приветствие'
-    SET_OPERATION     = 'Операция'
-    PRICE_REQUEST     = 'Запрос цены'
-    PRICE_RESPONSE    = 'Ответ с ценой'
-    PLANNING_REQUEST  = 'Запрос плана'
+    INITIALIZATION = 'Инициализация'
+    CREATE_ACTOR = 'Создание актора'
+    HELLO_WORLD = 'Приветствие'
+    SET_OPERATION = 'Операция'
+    PRICE_REQUEST = 'Запрос цены'
+    PRICE_RESPONSE = 'Ответ с ценой'
+    PLANNING_REQUEST = 'Запрос плана'
     PLANNING_RESPONSE = 'Ответ плана'
 
 

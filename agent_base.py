@@ -45,3 +45,27 @@ class AgentBase(Actor):
         self.entity     = data.get('entity')
         self.name = f'Агент {self.entity.name}'
         logging.info('%s проинициализирован', self.name)
+
+    @staticmethod
+    def get_decreasing_kpi_value(value: float, min_value: float, max_value: float):
+        if max_value == min_value:
+            return 1
+        if value > max_value or value < min_value:
+            return -1
+        if isinstance(value, float) and abs(value - min_value) < 0.000001:
+            return 1
+        if isinstance(value, float) and abs(value - max_value) < 0.000001:
+            return 0
+        return 1 - (value - min_value) / (max_value - min_value)
+
+    @staticmethod
+    def get_increasing_kpi_value(value: float, min_value: float, max_value: float):
+        if max_value == min_value:
+            return 1
+        if value > max_value or value < min_value:
+            return -1
+        if isinstance(value, float) and abs(value - min_value) < 0.000001:
+            return 0
+        if isinstance(value, float) and abs(value - max_value) < 0.000001:
+            return 1
+        return (value - min_value) / (max_value - min_value)

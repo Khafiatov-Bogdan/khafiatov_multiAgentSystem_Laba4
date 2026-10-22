@@ -7,15 +7,27 @@ from order_entity import OrderEntity
 from couriers_entity import CourierEntity
 from agents_dispatcher import AgentsDispatcher
 
+def load_weights(filename):
+    rows = get_excel_data(filename, 'Веса')
+    weights = {}
+    for row in rows:
+        criterion = row['Критерий']
+        weight = float(row['Вес'])
+        weights[criterion] = weight
+
+    total = sum(weights.values())
+    if abs(total - 1.0) > 0.001:
+        logging.warning('Сумма весов = %.3f, должна быть 1.0', total)
+    return weights
 
 def main():
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s [%(levelname)s] %(message)s')
 
     filename = 'Исходные данные.xlsx'
-
+    weights = load_weights(filename)
     scene = Scene()
-    dispatcher = AgentsDispatcher(scene)
+    dispatcher = AgentsDispatcher(scene, weights)
 
 
 

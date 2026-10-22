@@ -16,10 +16,13 @@ TYPES_AGENTS = {
 
 class AgentsDispatcher:
 
-    def __init__(self, scene):
+    def __init__(self, scene, weights):
         self.actor_system = ActorSystem()
         self.reference_book = ReferenceBook()
         self.scene = scene
+        self.weights = weights or {
+            'finish': 0.25, 'start': 0.05, 'price': 0.40, 'wait': 0.30,
+        }
 
     def add_entity(self, entity: BaseEntity) -> bool:
         entity_type = entity.get_type()
@@ -40,5 +43,6 @@ class AgentsDispatcher:
             'dispatcher': self,
             'scene': self.scene,
             'entity': entity,
+            'weights': self.weights
         }
         self.actor_system.tell(agent, Message(MessageType.INITIALIZATION, init_data))

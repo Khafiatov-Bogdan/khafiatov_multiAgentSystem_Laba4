@@ -42,8 +42,7 @@ class CourierEntity(BaseEntity):
             return 0.0
         return self.schedule[-1].end_time
 
-    def estimate_order(self, order) -> dict:
-
+    def estimate_order(self, order) -> typing.List[dict]:
         last_point = self.get_last_point()
         last_time = self.get_last_time()
 
@@ -56,14 +55,14 @@ class CourierEntity(BaseEntity):
         t_move = d_to_order / self.velocity
         t_deliv = d_with_order / self.velocity
 
+        price = (t_move + t_deliv) * self.price_per_time + self.price_start
+        variants = []
+
         arrival_time = last_time + t_move
         wait_end = max(arrival_time, order.time_from)
-        delivery_start = wait_end
-        delivery_end = delivery_start + t_deliv
+        delivery_end = wait_end + t_deliv
 
-        price = (t_move + t_deliv) * self.price_per_time + self.price_start
-
-        return {
+        asap = {
             'courier': self,
             'order': order,
             'variant_name': 'asap',
@@ -75,10 +74,50 @@ class CourierEntity(BaseEntity):
             'move_point_to': p1,
             'wait_from': arrival_time,
             'wait_to': wait_end,
-            'delivery_from': delivery_start,
+            'delivery_from': wait_end,
             'delivery_to': delivery_end,
             'price': price,
         }
+        variants.append(asap)
+
+        jit_time_from = order.time_from - t_move
+        if arrival_time < order.time_from and jit_time_from > 0 and not self.schedule:
+            jit_delivery_end = order.time_from + t_deliv
+            jit = {
+                'courier': self,
+                'order': order,
+                'variant_name': 'jit',
+                'time_from': jit_time_from,
+                'time_to': jit_delivery_end,
+                'move_from': jit_time_from,
+                'move_to': order.time_from,
+                'move_point_from': last_point,
+                'move_point_to': p1,
+                'wait_from': order.time_from,
+                'wait_to': order.time_from,
+                'delivery_from': order.time_from,
+                'delivery_to': jit_delivery_end,
+                'price': price,
+            }
+            variants.append(jit)
+
+        jit2_time_from = order.time_to - t_deliv - t_move
+        if (not self.schedule
+                and order.time_to > 0
+                and jit2_time_from > last_time
+                and jit2_time_from >= 0
+                and order.time_to >= order.time_from + t_deliv):
+            jit2 = {
+                'courier': self, 'order': order, 'variant_name': 'jit_delivery',
+                'time_from': jit2_time_from, 'time_to': order.time_to,
+                'move_from': jit2_time_from, 'move_to': order.time_to - t_deliv,
+                'move_point_from': last_point, 'move_point_to': p1,
+                'wait_from': order.time_to - t_deliv, 'wait_to': order.time_to - t_deliv,
+                'delivery_from': order.time_to - t_deliv, 'delivery_to': order.time_to,
+                'price': price,
+            }
+            variants.append(jit2)
+        return variants
 
     def add_order_to_schedule(self, order, time_from, time_to, price, params) -> bool:
         if self.get_conflicts(time_from, time_to):
